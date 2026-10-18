@@ -1,0 +1,8 @@
+1.0.0
+ - Primera version.
+ - Novedades con paginacion (15 paginas).
+ - Las 11 categorias de la web: Trailerazos, VS. El Bananero, Infomerciales,
+   Canciones, Noticiero, Prof. Paul Vazo, Putoriales, Cartitas, Varios,
+   Categoria 2005 y Animaciones Garka.
+ - Buscador.
+ - Reproduccion directa del MP4 original de la web (videos/<id>.mp4).
