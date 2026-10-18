@@ -1,3 +1,10 @@
+1.0.1
+ - NUEVO: Radio Garka, como entrada directa en el menu principal (junto a
+   Novedades, Categorias y Buscar).
+ - Lista los ultimos programas y todo el archivo por meses (desde junio 2020).
+ - Los programas se emiten desde Dropbox, con enlace firmado que el add-on
+   resuelve al vuelo; se reproducen y se puede adelantar.
+
 1.0.0
  - Primera version.
  - Novedades con paginacion (15 paginas).

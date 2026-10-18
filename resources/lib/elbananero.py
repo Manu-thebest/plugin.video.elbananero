@@ -125,3 +125,64 @@ def url_miniatura(vid):
 
 def url_ficha(vid):
     return "%svideo.php?id=%s" % (BASE, vid)
+
+
+# ---------------------------------------------------------------------------
+# RADIO GARKA
+# Vive en /radiogarka/ y es un mundo aparte: sus enlaces (video.php?id=N) son
+# RELATIVOS a esa carpeta, y esos ids NO son los videos de la web principal
+# (el id 51 de radiogarka no es el video 51). Cada programa es un MP4 alojado
+# en Dropbox, con enlace firmado: hay que abrir su ficha para sacarlo.
+# ---------------------------------------------------------------------------
+
+RG = BASE + "radiogarka/"
+
+_RX_PROGRAMA = re.compile(r'<a href="video\.php\?id=(\d+)" class="programa-card">.*?<h3>(.*?)</h3>', re.S)
+_RX_MES = re.compile(r'href="mes\.php\?anio=(\d+)&mes=(\d+)"[^>]*>\s*([^<]+?)\s*<')
+_RX_FUENTE = re.compile(r'<source[^>]*src="([^"]+)"', re.I)
+
+
+def _programas(html):
+    salida, vistos = [], set()
+    for vid, titulo in _RX_PROGRAMA.findall(html):
+        if vid in vistos:
+            continue
+        vistos.add(vid)
+        salida.append({"id": vid, "titulo": _limpiar(titulo) or ("Programa %s" % vid)})
+    return salida
+
+
+def radio_garka():
+    """Ultimos programas de Radio Garka."""
+    return _programas(_descargar(RG))
+
+
+def radio_garka_mes(anio, mes):
+    """Programas de un mes concreto del archivo."""
+    return _programas(_descargar("%smes.php?anio=%s&mes=%s" % (RG, anio, mes)))
+
+
+def radio_garka_meses():
+    """Archivo: [(anio, mes, nombre del mes)] de mas nuevo a mas viejo."""
+    html = _descargar(RG)
+    salida, vistos = [], set()
+    for anio, mes, etiqueta in _RX_MES.findall(html):
+        try:
+            clave = (int(anio), int(mes))
+        except ValueError:
+            continue
+        if clave in vistos:
+            continue
+        vistos.add(clave)
+        salida.append((clave[0], clave[1], _limpiar(etiqueta)))
+    return salida
+
+
+def url_programa(vid):
+    """Enlace real (Dropbox) de un programa: hay que abrir su ficha."""
+    html = _descargar("%svideo.php?id=%s" % (RG, vid))
+    for fuente in _RX_FUENTE.findall(html):
+        fuente = fuente.replace("&amp;", "&").strip()
+        if fuente and "descarga" not in fuente and fuente not in ("/",):
+            return fuente if fuente.startswith("http") else RG + fuente.lstrip("/")
+    raise ErrorSitio("ese programa no tiene enlace de audio")

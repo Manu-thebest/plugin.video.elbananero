@@ -60,6 +60,7 @@ def menu_principal():
     _menu([
         ("Novedades", {"action": "lista", "tipo": "novedades", "pagina": 1},
          "DefaultRecentlyAddedMovies.png"),
+        ("Radio Garka", {"action": "radio"}, "DefaultVideoPlaylists.png"),
         ("Categorías", {"action": "categorias"}, "DefaultGenre.png"),
         ("Buscar", {"action": "buscar"}, "DefaultAddonsSearch.png"),
     ])
@@ -125,10 +126,90 @@ def reproducir(vid, titulo):
     xbmcplugin.setResolvedUrl(HANDLE, True, li)
 
 
+def _programas_radio(programas):
+    for prog in programas:
+        li = xbmcgui.ListItem(label=prog["titulo"])
+        li.setArt({"icon": os.path.join(_RUTA, "resources", "icon.png"), "fanart": FANART})
+        li.setInfo("video", {"title": prog["titulo"]})
+        li.setProperty("IsPlayable", "true")
+        xbmcplugin.addDirectoryItem(
+            HANDLE, url_for(action="play_radio", vid=prog["id"], titulo=prog["titulo"]),
+            li, isFolder=False)
+
+
+def menu_radio():
+    xbmcplugin.setContent(HANDLE, "videos")
+    try:
+        programas = elbananero.radio_garka()
+    except elbananero.ErrorSitio as e:
+        xbmc.log("El Bananero: Radio Garka no responde: %s" % e, xbmc.LOGERROR)
+        notificar("No he podido leer Radio Garka")
+        xbmcplugin.endOfDirectory(HANDLE, succeeded=False)
+        return
+    _programas_radio(programas)
+    li = xbmcgui.ListItem(label="Programas anteriores (por mes)")
+    li.setArt({"icon": "DefaultFolder.png", "fanart": FANART})
+    xbmcplugin.addDirectoryItem(HANDLE, url_for(action="radio_meses"), li, isFolder=True)
+    xbmcplugin.endOfDirectory(HANDLE)
+
+
+def menu_radio_meses():
+    xbmcplugin.setContent(HANDLE, "files")
+    try:
+        meses = elbananero.radio_garka_meses()
+    except elbananero.ErrorSitio as e:
+        xbmc.log("El Bananero: archivo de Radio Garka no responde: %s" % e, xbmc.LOGERROR)
+        notificar("No he podido leer el archivo de Radio Garka")
+        xbmcplugin.endOfDirectory(HANDLE, succeeded=False)
+        return
+    for anio, mes, nombre in meses:
+        li = xbmcgui.ListItem(label="%s %d" % (nombre, anio))
+        li.setArt({"icon": "DefaultFolder.png", "fanart": FANART})
+        xbmcplugin.addDirectoryItem(
+            HANDLE, url_for(action="radio_mes", anio=anio, mes=mes), li, isFolder=True)
+    xbmcplugin.endOfDirectory(HANDLE)
+
+
+def lista_radio_mes(anio, mes):
+    xbmcplugin.setContent(HANDLE, "videos")
+    try:
+        programas = elbananero.radio_garka_mes(anio, mes)
+    except elbananero.ErrorSitio as e:
+        xbmc.log("El Bananero: Radio Garka %s/%s falla: %s" % (anio, mes, e), xbmc.LOGERROR)
+        notificar("No he podido leer ese mes")
+        xbmcplugin.endOfDirectory(HANDLE, succeeded=False)
+        return
+    _programas_radio(programas)
+    xbmcplugin.endOfDirectory(HANDLE)
+
+
+def reproducir_programa(vid, titulo):
+    """Los programas viven en Dropbox: hay que abrir la ficha para sacar el enlace."""
+    try:
+        url = elbananero.url_programa(vid)
+    except elbananero.ErrorSitio as e:
+        xbmc.log("El Bananero: no pude resolver el programa %s: %s" % (vid, e), xbmc.LOGERROR)
+        notificar("Ese programa no tiene audio disponible")
+        xbmcplugin.setResolvedUrl(HANDLE, False, xbmcgui.ListItem())
+        return
+    xbmc.log("El Bananero: Radio Garka -> %s" % url, xbmc.LOGINFO)
+    li = xbmcgui.ListItem(path=url)
+    li.setInfo("video", {"title": titulo or ("Programa %s" % vid)})
+    xbmcplugin.setResolvedUrl(HANDLE, True, li)
+
+
 def router(params):
     accion = params.get("action", "")
     if accion == "categorias":
         menu_categorias()
+    elif accion == "radio":
+        menu_radio()
+    elif accion == "radio_meses":
+        menu_radio_meses()
+    elif accion == "radio_mes":
+        lista_radio_mes(params.get("anio", ""), params.get("mes", ""))
+    elif accion == "play_radio":
+        reproducir_programa(params.get("vid", ""), params.get("titulo", ""))
     elif accion == "lista":
         lista(params.get("tipo", "novedades"), params.get("valor", ""), params.get("pagina", 1))
     elif accion == "buscar":
