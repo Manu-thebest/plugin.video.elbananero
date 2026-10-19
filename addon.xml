@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.elbananero" name="El Bananero" version="1.0.1" provider-name="Manu">
+<addon id="plugin.video.elbananero" name="El Bananero" version="1.0.2" provider-name="Manu">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
     </requires>
@@ -11,7 +11,7 @@
         <description lang="es">Lista y reproduce los videos de elbananero.com: novedades, las 11 categorias y busqueda. Los videos son MP4 directos, sin publicidad ni intermediarios.</description>
         <platform>all</platform>
         <assets>
-            <icon>resources/icon.png</icon>
+            <icon>resources/icon_bananero.png</icon>
             <fanart>resources/fanart.jpg</fanart>
         </assets>
     </extension>

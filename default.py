@@ -55,25 +55,43 @@ def _videos(videos):
             HANDLE, url_for(action="play", vid=v["id"], titulo=v["titulo"]), li, isFolder=False)
 
 
+# Nombre "bonito" de cada seccion de la web (las claves son las de la web).
+NOMBRES_CATEGORIA = {
+    "TRAILERAZOS": "Trailerazos",
+    "VS. EL BANANERO": "VS. El Bananero",
+    "INFOMERCIALES": "Infomerciales",
+    "CANCIONES": "Canciones",
+    "NOTICIERO": "Noticiero",
+    "PROF. PAUL VAZO": "Prof. Paul Vazo",
+    "PUTORIALES": "Putoriales",
+    "CARTITAS": "Cartitas",
+    "VARIOS": "Varios",
+    "CATEGORIA 2005": "Categoría 2005",
+    "ANIMACIONES GARKA": "Animaciones Garka",
+}
+
+
+def _sin_acentos(texto):
+    tabla = str.maketrans("áéíóúüñÁÉÍÓÚÜÑ", "aeiouunAEIOUUN")
+    return texto.translate(tabla).lower()
+
+
 def menu_principal():
+    """Todo en la primera pantalla: novedades, las secciones y el buscador."""
     xbmcplugin.setContent(HANDLE, "files")
-    _menu([
+    items = [
         ("Novedades", {"action": "lista", "tipo": "novedades", "pagina": 1},
          "DefaultRecentlyAddedMovies.png"),
         ("Radio Garka", {"action": "radio"}, "DefaultVideoPlaylists.png"),
-        ("Categorías", {"action": "categorias"}, "DefaultGenre.png"),
-        ("Buscar", {"action": "buscar"}, "DefaultAddonsSearch.png"),
-    ])
-    xbmcplugin.endOfDirectory(HANDLE, cacheToDisc=False)
-
-
-def menu_categorias():
-    xbmcplugin.setContent(HANDLE, "files")
-    items = []
-    for categoria in elbananero.CATEGORIAS:
-        items.append((categoria.title(),
+    ]
+    # Las 11 secciones de la web, directamente aqui (sin submenu) y por orden
+    # alfabetico, que con tanta entrada se agradece.
+    for categoria in sorted(elbananero.CATEGORIAS, key=lambda c: _sin_acentos(
+            NOMBRES_CATEGORIA.get(c, c))):
+        items.append((NOMBRES_CATEGORIA.get(categoria, categoria.title()),
                       {"action": "lista", "tipo": "categoria", "valor": categoria, "pagina": 1},
                       "DefaultGenre.png"))
+    items.append(("Buscar", {"action": "buscar"}, "DefaultAddonsSearch.png"))
     _menu(items)
     xbmcplugin.endOfDirectory(HANDLE, cacheToDisc=False)
 
@@ -200,9 +218,7 @@ def reproducir_programa(vid, titulo):
 
 def router(params):
     accion = params.get("action", "")
-    if accion == "categorias":
-        menu_categorias()
-    elif accion == "radio":
+    if accion == "radio":
         menu_radio()
     elif accion == "radio_meses":
         menu_radio_meses()
